@@ -2,15 +2,20 @@ from bs4 import BeautifulSoup
 import sys
 from selenium import webdriver
 import time
+from selenium.webdriver.chrome.options import Options
+
 def loadUrl(userUrl):
-    driver = webdriver.Chrome()
+    change_options = Options()
+    change_options.add_argument("--headless=new")
+    driver = webdriver.Chrome(options = change_options)
     try:
         driver.get(userUrl)
-        time.sleep(4)
+        time.sleep(3)
         content = driver.page_source
-        driver.close()
     except Exception:
         return None
+    finally:
+        driver.close()
     if content:
         soup = BeautifulSoup(content, 'html.parser')
         title_tag = soup.find('title')
@@ -18,11 +23,11 @@ def loadUrl(userUrl):
         bodyTag = soup.find('body')
         bodyText = bodyTag.get_text(separator="\n", strip=True) if bodyTag else "Body is Not there"
         links = [link.get('href') for link in soup.find_all('a') if link.get('href')]
-        formatLinks = [i for i in links if i.startswith("https://")]
+        formatLinks = [i for i in links if i.startswith("https://") or i.startswith("/")]
         return {"title": title, "bodyText": bodyText, "Links": formatLinks}
     else:
         print("Some error happened!!")
-        return content
+        return None
 if __name__ == "__main__":
     try:
         userUrl = sys.argv
@@ -41,5 +46,7 @@ if __name__ == "__main__":
                                 print(j)
                 else:
                     print("Failed , Empty Content")
+        else:
+            print("You gave either more or less than 1 argument.. Kindly Type 'python <urlname>'")
     except Exception as e:
         print(e)
